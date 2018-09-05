@@ -9,6 +9,6 @@
 # http://www.cmake.org/Wiki/CMake:How_To_Find_Libraries
 
 include(LibFindMacros)
-libfind_pkg_detect(Crypto libcrypto FIND_PATH openssl/crypto.h FIND_LIBRARY crypto)
+libfind_pkg_detect(Crypto libcrypto FIND_PATH openssl/crypto.h FIND_LIBRARY crypto libeay32)
 set(Crypto_VERSION ${Crypto_PKGCONF_VERSION})
 libfind_process(Crypto)

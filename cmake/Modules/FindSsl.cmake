@@ -9,6 +9,6 @@
 # http://www.cmake.org/Wiki/CMake:How_To_Find_Libraries
 
 include(LibFindMacros)
-libfind_pkg_detect(Ssl libssl FIND_PATH openssl/ssl.h FIND_LIBRARY ssl)
+libfind_pkg_detect(Ssl libssl FIND_PATH openssl/ssl.h FIND_LIBRARY ssl ssleay32)
 set(Ssl_VERSION ${Ssl_PKGCONF_VERSION})
 libfind_process(Ssl)

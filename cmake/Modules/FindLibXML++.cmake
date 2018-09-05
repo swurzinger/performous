@@ -20,12 +20,12 @@ if(LibXML++_PKGCONF_3_0_FOUND)
   set(LibXML++_VERSION_3_0 "1")
   set(LibXML++_PKGCONF_INCLUDE_DIRS ${LibXML++_PKGCONF_3_0_INCLUDE_DIRS})
   set(LibXML++_PKGCONF_LIBRARY_DIRS ${LibXML++_PKGCONF_3_0_LIBRARY_DIRS})
-else(LixXML++_PKGCONF_3_0_FOUND)
+else(LibXML++_PKGCONF_3_0_FOUND)
   libfind_pkg_check_modules(LibXML++_PKGCONF_2_6 libxml++-2.6)
+  set(LibXML++_VERSION "2.6")
+  set(LibXML++_VERSION_2_6 "1")
+  set(LibXML++_VERSION_3_0 "0")
   if(LibXML++_PKGCONF_2_6_FOUND)
-    set(LibXML++_VERSION "2.6")
-    set(LibXML++_VERSION_2_6 "1")
-    set(LibXML++_VERSION_3_0 "0")
     set(LibXML++_PKGCONF_INCLUDE_DIRS ${LibXML++_PKGCONF_2_6_INCLUDE_DIRS})
     set(LibXML++_PKGCONF_LIBRARY_DIRS ${LibXML++_PKGCONF_2_6_LIBRARY_DIRS})
   endif(LibXML++_PKGCONF_2_6_FOUND)
@@ -47,7 +47,7 @@ find_path(LibXML++Config_INCLUDE_DIR
 
 # Finally the library itself
 find_library(LibXML++_LIBRARY
-  NAMES xml++-${LibXML++_VERSION}
+  NAMES xml++-${LibXML++_VERSION} xml++
   HINTS ${LibXML++_PKGCONF_LIBRARY_DIRS}
 )
 

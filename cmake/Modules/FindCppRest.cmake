@@ -13,6 +13,6 @@ include(LibFindMacros)
 libfind_package(CppRest Crypto)
 libfind_package(CppRest Ssl)
 
-libfind_pkg_detect(CppRest cpprest FIND_PATH http_client.h PATH_SUFFIXES cpprest FIND_LIBRARY cpprest)
+libfind_pkg_detect(CppRest cpprest FIND_PATH http_client.h PATH_SUFFIXES cpprest FIND_LIBRARY cpprest cpprest_2_10)
 set(CppRest_VERSION ${CppRest_PKGCONF_VERSION})
 libfind_process(CppRest)
