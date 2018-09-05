@@ -14,23 +14,23 @@ extern "C" {
 }
 
 Song::Song(web::json::value const& song): dummyVocal(TrackName::LEAD_VOCAL), randomIdx(rand()) {
-	path = song.has_field("TxtFileFolder") ? fs::path(song.at("TxtFileFolder").as_string().substr(0, song.at("TxtFileFolder").as_string().find_last_of("/\\"))) : "";
-	filename = song.has_field("TxtFile") ? fs::path(song.at("TxtFile").as_string()) : "";
-	artist = song.has_field("Artist") ? song.at("Artist").as_string() : "";
-	title = song.has_field("Title") ? song.at("Title").as_string() : "";
-	language = song.has_field("Language") ? song.at("Language").as_string() : "";
-	edition = song.has_field("Edition") ? song.at("Edition").as_string() : "";
-	creator = song.has_field("Creator") ? song.at("Creator").as_string() : "";
-	genre = song.has_field("Genre") ? song.at("Genre").as_string() : "";
-	cover = song.has_field("Cover") ? song.at("Cover").as_string() : "";
-	background = song.has_field("Background") ? song.at("Background").as_string() : "";
-	video = song.has_field("VideoFile") ? fs::path(song.at("VideoFile").as_string()) : "";
-	videoGap = song.has_field("VideoGap") ? song.at("VideoGap").as_number().to_double() : 0.0;
-	start = song.has_field("Start") ? song.at("Start").as_number().to_double() : 0.0;
-	preview_start = song.has_field("PreviewStart") ? song.at("PreviewStart").as_number().to_double() : 0.0;
-	m_duration = song.has_field("Duration") ? song.at("Duration").as_number().to_double() : 0.0;
-	music["background"] = song.has_field("SongFile") ? fs::path(song.at("SongFile").as_string()) : "";
-	music["vocals"] = song.has_field("Vocals") ? fs::path(song.at("Vocals").as_string()) : "";
+	path = song.has_field(SP("TxtFileFolder")) ? fs::path(song.at(SP("TxtFileFolder")).as_string().substr(0, song.at(SP("TxtFileFolder")).as_string().find_last_of(SP("/\\")))) : "";
+	filename = song.has_field(SP("TxtFile")) ? fs::path(song.at(SP("TxtFile")).as_string()) : "";
+	artist = song.has_field(SP("Artist")) ? SU(song.at(SP("Artist")).as_string()) : "";
+	title = song.has_field(SP("Title")) ? SU(song.at(SP("Title")).as_string()) : "";
+	language = song.has_field(SP("Language")) ? SU(song.at(SP("Language")).as_string()) : "";
+	edition = song.has_field(SP("Edition")) ? SU(song.at(SP("Edition")).as_string()) : "";
+	creator = song.has_field(SP("Creator")) ? SU(song.at(SP("Creator")).as_string()) : "";
+	genre = song.has_field(SP("Genre")) ? SU(song.at(SP("Genre")).as_string()) : "";
+	cover = song.has_field(SP("Cover")) ? SU(song.at(SP("Cover")).as_string()) : "";
+	background = song.has_field(SP("Background")) ? fs::path(song.at(SP("Background")).as_string()) : "";
+	video = song.has_field(SP("VideoFile")) ? fs::path(song.at(SP("VideoFile")).as_string()) : "";
+	videoGap = song.has_field(SP("VideoGap")) ? song.at(SP("VideoGap")).as_number().to_double() : 0.0;
+	start = song.has_field(SP("Start")) ? song.at(SP("Start")).as_number().to_double() : 0.0;
+	preview_start = song.has_field(SP("PreviewStart")) ? song.at(SP("PreviewStart")).as_number().to_double() : 0.0;
+	m_duration = song.has_field(SP("Duration")) ? song.at(SP("Duration")).as_number().to_double() : 0.0;
+	music["background"] = song.has_field(SP("SongFile")) ? fs::path(song.at(SP("SongFile")).as_string()) : "";
+	music["vocals"] = song.has_field(SP("Vocals")) ? fs::path(song.at(SP("Vocals")).as_string()) : "";
 	loadStatus = Song::LoadStatus::HEADER;
 	collateUpdate();
 }

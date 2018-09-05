@@ -22,6 +22,14 @@
 
 #include <sys/stat.h>
 
+#if _MSC_VER
+#define tstat _wstat
+#define tstatt _stat
+#else
+#define tstat stat
+#define tstatt stat
+#endif
+
 Songs::Songs(Database & database, std::string const& songlist): m_songlist(songlist), m_database(database), m_order(config["songs/sort-order"].i()) {
 	m_updateTimer.setTarget(getInf()); // Using this as a simple timer counting seconds
 	reload();
@@ -98,8 +106,8 @@ void Songs::LoadCache() {
     }
 
     for(auto const& song : jsonRoot.as_array()) {
-    	struct stat buffer;
-    	if(stat(song.at("TxtFile").as_string().c_str(), &buffer) == 0) {
+    	struct tstatt buffer;
+    	if(tstat(song.at(SP("TxtFile")).as_string().c_str(), &buffer) == 0) {
     		std::shared_ptr<Song> realSong(new Song(song));
     		m_songs.push_back(realSong);
     	}  	
@@ -113,56 +121,56 @@ void Songs::CacheSonglist() {
     {  
         web::json::value songObject = web::json::value::object();
         if(!song->path.string().empty()) {
-        	songObject["TxtFileFolder"] = web::json::value::string(song->path.string());
+        	songObject[SP("TxtFileFolder")] = web::json::value::string(S(song->path.string()));
         }
         if(!song->filename.string().empty()) {
-        	songObject["TxtFile"] = web::json::value::string(song->filename.string());
+        	songObject[SP("TxtFile")] = web::json::value::string(S(song->filename.string()));
         }
         if(!song->title.empty()) {
-        	songObject["Title"] = web::json::value::string(song->title);
+        	songObject[SP("Title")] = web::json::value::string(S(song->title));
     	}
 		if(!song->artist.empty()) {
-        	songObject["Artist"] = web::json::value::string(song->artist);
+        	songObject[SP("Artist")] = web::json::value::string(S(song->artist));
     	}
         if(!song->edition.empty()) {
-        	songObject["Edition"] = web::json::value::string(song->edition);
+        	songObject[SP("Edition")] = web::json::value::string(S(song->edition));
     	}
     	if(!song->language.empty()) {
-        	songObject["Language"] = web::json::value::string(song->language);
+        	songObject[SP("Language")] = web::json::value::string(S(song->language));
         }
         if(!song->creator.empty()) {
-        	songObject["Creator"] = web::json::value::string(song->creator);
+        	songObject[SP("Creator")] = web::json::value::string(S(song->creator));
     	}
     	if(!song->genre.empty()) {
-        	songObject["Genre"] = web::json::value::string(song->genre);
+        	songObject[SP("Genre")] = web::json::value::string(S(song->genre));
     	}
     	if(!song->cover.string().empty()) {
-        	songObject["Cover"] = web::json::value::string(song->cover.string());
+        	songObject[SP("Cover")] = web::json::value::string(S(song->cover.string()));
     	}
     	if(!song->background.string().empty()) {
-	        songObject["Background"] = web::json::value::string(song->background.string());
+	        songObject[SP("Background")] = web::json::value::string(S(song->background.string()));
 	    }
     	if(!song->music["background"].string().empty()) {
-	        songObject["SongFile"] = web::json::value::string(song->music["background"].string());
+	        songObject[SP("SongFile")] = web::json::value::string(S(song->music["background"].string()));
 	    }
     	if(!song->video.string().empty()) {
-	        songObject["VideoFile"] = web::json::value::string(song->video.string());
+	        songObject[SP("VideoFile")] = web::json::value::string(S(song->video.string()));
 	    }
     	if(!std::isnan(song->start)) {
-	        songObject["Start"] = web::json::value(song->start);
+	        songObject[SP("Start")] = web::json::value(song->start);
 	    }
     	if(!std::isnan(song->videoGap)) {
-	        songObject["VideoGap"] = web::json::value(song->videoGap);
+	        songObject[SP("VideoGap")] = web::json::value(song->videoGap);
 	    }
     	if(!std::isnan(song->preview_start)) {
-	        songObject["PreviewStart"] = web::json::value::number(song->preview_start);
+	        songObject[SP("PreviewStart")] = web::json::value::number(song->preview_start);
 	    }
     	if(!song->music["vocals"].string().empty()) {
-	        songObject["Vocals"] = web::json::value::string(song->music["vocals"].string());
+	        songObject[SP("Vocals")] = web::json::value::string(S(song->music["vocals"].string()));
 	    }
     	auto duration = song->getDurationSeconds();
     	if(!std::isnan(duration)) {
-	    	songObject["Duration"] = web::json::value(duration);
+	    	songObject[SP("Duration")] = web::json::value(duration);
 	    }
 	    if(songObject != web::json::value::object()) {
         	jsonRoot[i] = songObject;

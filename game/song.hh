@@ -6,9 +6,19 @@
 #include "util.hh"
 
 #include <boost/noncopyable.hpp>
+#define _TURN_OFF_PLATFORM_STRING
 #include <cpprest/json.h>
 #include <stdexcept>
 #include <string>
+
+#define SP(x) _XPLATSTR(x)
+#ifdef _UTF16_STRINGS
+#define S(x) utility::conversions::utf8_to_utf16(x)
+#define SU(x) utility::conversions::to_utf8string(x)
+#else
+#define S(x) x
+#define SU(x) x
+#endif
 
 class SongParser;
 

@@ -1,10 +1,22 @@
 #pragma once
 #ifdef USE_WEBSERVER
 
+#define _TURN_OFF_PLATFORM_STRING
 #include <cpprest/http_listener.h>
 #include <cpprest/filestream.h>
+#include <boost/algorithm/string.hpp>
 
 #include "screen_playlist.hh"
+
+
+#define SP(x) _XPLATSTR(x)
+#ifdef _UTF16_STRINGS
+#define S(x) utility::conversions::utf8_to_utf16(x)
+#define SU(x) utility::conversions::to_utf8string(x)
+#else
+#define S(x) x
+#define SU(x) x
+#endif
 
 class RequestHandler
 {

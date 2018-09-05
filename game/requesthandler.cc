@@ -3,7 +3,7 @@
 RequestHandler::RequestHandler(Songs& songs):m_songs(songs)
 {
 }
-RequestHandler::RequestHandler(std::string url, Songs& songs):m_listener(url),m_songs(songs)
+RequestHandler::RequestHandler(std::string url, Songs& songs):m_listener(S(url)),m_songs(songs)
 {
     m_listener.support(web::http::methods::GET, std::bind(&RequestHandler::Get, this, std::placeholders::_1));
     m_listener.support(web::http::methods::PUT, std::bind(&RequestHandler::Put, this, std::placeholders::_1));
@@ -27,12 +27,12 @@ void RequestHandler::Error(pplx::task<void>& t)
 }
 
 void RequestHandler::HandleFile(web::http::http_request request, std::string filePath) {
-    auto path = filePath != "" ? filePath : request.relative_uri().path();
+    auto path = filePath != "" ? filePath : SU(request.relative_uri().path());
     auto fileName = path.substr(path.find_last_of("/\\") + 1);
         
     std::string fileToSend = findFile(fileName).string();
 
-    concurrency::streams::fstream::open_istream(U(fileToSend), std::ios::in).then([=](concurrency::streams::istream is) {
+    concurrency::streams::fstream::open_istream(S(fileToSend), std::ios::in).then([=](concurrency::streams::istream is) {
         std::string content_type = "";
         if(path.find(".html") != std::string::npos) {
             content_type = "text/html";
@@ -48,7 +48,7 @@ void RequestHandler::HandleFile(web::http::http_request request, std::string fil
             content_type = "image/x-icon";
         }
 
-        request.reply(web::http::status_codes::OK, is, U(content_type)).then([](pplx::task<void> t) {
+        request.reply(web::http::status_codes::OK, is, S(content_type)).then([](pplx::task<void> t) {
             try {
                 t.get();
             } catch(...){
@@ -60,7 +60,7 @@ void RequestHandler::HandleFile(web::http::http_request request, std::string fil
         try {
             t.get();
         } catch(...) {
-            request.reply(web::http::status_codes::InternalError,U("INTERNAL ERROR "));
+            request.reply(web::http::status_codes::InternalError,SP("INTERNAL ERROR "));
         }
     });
 }
@@ -69,36 +69,36 @@ void RequestHandler::Get(web::http::http_request request)
 {
     std::string content_type = "text/html";
     auto uri = request.relative_uri().path();
-    if(request.relative_uri().query() != "") {
-        uri += "?" + request.relative_uri().query();
+    if(request.relative_uri().query() != SP("")) {
+        uri += SP("?") + request.relative_uri().query();
     }
-    std::clog << "requesthandler/debug: path is: " << uri << std::endl;
+    std::clog << "requesthandler/debug: path is: " << SU(uri) << std::endl;
     auto path = request.relative_uri().path();
-    if (path == "/") {
+    if (path == SP("/")) {
         HandleFile(request, findFile("index.html").string());
-    } else if (path == "/api/getDataBase.json") { //get database
+    } else if (path == SP("/api/getDataBase.json")) { //get database
         m_songs.setFilter("");
-        if(request.relative_uri().query() == "sort=artist&order=ascending") {
+        if(request.relative_uri().query() == SP("sort=artist&order=ascending")) {
             m_songs.sortSpecificChange(2);    
-        } else if(request.relative_uri().query() == "sort=artist&order=descending") {
+        } else if(request.relative_uri().query() == SP("sort=artist&order=descending")) {
             m_songs.sortSpecificChange(2, true);
-        } else if(request.relative_uri().query() == "sort=title&order=ascending") {
+        } else if(request.relative_uri().query() == SP("sort=title&order=ascending")) {
             m_songs.sortSpecificChange(1);    
-        } else if(request.relative_uri().query() == "sort=title&order=descending") {
+        } else if(request.relative_uri().query() == SP("sort=title&order=descending")) {
             m_songs.sortSpecificChange(1, true);
-        } else if(request.relative_uri().query() == "sort=language&order=ascending") {
+        } else if(request.relative_uri().query() == SP("sort=language&order=ascending")) {
             m_songs.sortSpecificChange(6);    
-        } else if(request.relative_uri().query() == "sort=language&order=descending") {
+        } else if(request.relative_uri().query() == SP("sort=language&order=descending")) {
             m_songs.sortSpecificChange(6, true);
-        } else if(request.relative_uri().query() == "sort=edition&order=ascending") {
+        } else if(request.relative_uri().query() == SP("sort=edition&order=ascending")) {
             m_songs.sortSpecificChange(3);    
-        } else if(request.relative_uri().query() == "sort=edition&order=descending") {
+        } else if(request.relative_uri().query() == SP("sort=edition&order=descending")) {
             m_songs.sortSpecificChange(3, true);
         }
         web::json::value jsonRoot = SongsToJsonObject();
         request.reply(web::http::status_codes::OK, jsonRoot);
         return;
-    }  else if(path == "/api/language") {
+    }  else if(path == SP("/api/language")) {
         auto localeMap = GenerateLocaleDict();
         web::json::value jsonRoot = web::json::value::object();
             for (auto const &kv : localeMap) {
@@ -109,30 +109,30 @@ void RequestHandler::Get(web::http::http_request request)
                 }
                 std::replace(key.begin(), key.end(), ' ','_');
                 boost::to_lower(key);
-                jsonRoot[key] = web::json::value(kv.second);
+                jsonRoot[S(key)] = web::json::value(S(kv.second));
             }
         request.reply(web::http::status_codes::OK, jsonRoot);
         return;
-    } else if(path == "/api/getCurrentPlaylist.json") {
+    } else if(path == SP("/api/getCurrentPlaylist.json")) {
         Game* gm = Game::getSingletonPtr();
         web::json::value jsonRoot = web::json::value::array();
         auto i = 0;
         for (auto const& song : gm->getCurrentPlayList().getList()) {
             web::json::value songObject = web::json::value::object();
-            songObject["Title"] = web::json::value::string(song->title);
-            songObject["Artist"] = web::json::value::string(song->artist);
-            songObject["Edition"] = web::json::value::string(song->edition);
-            songObject["Language"] = web::json::value::string(song->language);
-            songObject["Creator"] = web::json::value::string(song->creator);
-            songObject["Duration"] = web::json::value(song->getDurationSeconds());
+            songObject[SP("Title")] = web::json::value::string(S(song->title));
+            songObject[SP("Artist")] = web::json::value::string(S(song->artist));
+            songObject[SP("Edition")] = web::json::value::string(S(song->edition));
+            songObject[SP("Language")] = web::json::value::string(S(song->language));
+            songObject[SP("Creator")] = web::json::value::string(S(song->creator));
+            songObject[SP("Duration")] = web::json::value(song->getDurationSeconds());
             jsonRoot[i] = songObject;
             i++;
         }
 
         request.reply(web::http::status_codes::OK, jsonRoot);
         return;
-    } else if(path == "/api/getplaylistTimeout") {
-        request.reply(web::http::status_codes::OK, U(config["game/playlist_screen_timeout"].i()));
+    } else if(path == SP("/api/getplaylistTimeout")) {
+        request.reply(web::http::status_codes::OK, config["game/playlist_screen_timeout"].i());
         return;
     } else {
         HandleFile(request);
@@ -144,10 +144,10 @@ void RequestHandler::Post(web::http::http_request request)
     Game* gm = Game::getSingletonPtr();
 
     auto uri = request.relative_uri().path();
-    if(request.relative_uri().query() != "") {
-        uri += "?" + request.relative_uri().query();
+    if(request.relative_uri().query() != SP("")) {
+        uri += SP("?") + request.relative_uri().query();
     }
-    std::clog << "requesthandler/debug: path is: " << uri << std::endl;
+    std::clog << "requesthandler/debug: path is: " << SU(uri) << std::endl;
 
     auto path = request.relative_uri().path();
 
@@ -158,11 +158,11 @@ void RequestHandler::Post(web::http::http_request request)
         return;
     }
 
-    if (path == "/api/add") {
+    if (path == SP("/api/add")) {
         m_songs.setFilter("");
         std::shared_ptr<Song> songPointer = GetSongFromJSON(jsonPostBody);
         if(!songPointer) {
-            request.reply(web::http::status_codes::NotFound, "Song \"" + jsonPostBody["Artist"].as_string() + " - " + jsonPostBody["Title"].as_string() + "\" was not found.");
+            request.reply(web::http::status_codes::NotFound, SP("Song \"") + jsonPostBody[SP("Artist")].as_string() + SP(" - ") + jsonPostBody[SP("Title")].as_string() + SP("\" was not found."));
             return;
         } else {
             std::clog << "requesthandler/debug: Adding " << songPointer->artist << " - " << songPointer->title << " to the playlist " << std::endl;
@@ -173,13 +173,13 @@ void RequestHandler::Post(web::http::http_request request)
             request.reply(web::http::status_codes::OK, "success");
             return;
         }
-    } else if(path == "/api/remove") {
+    } else if(path == SP("/api/remove")) {
         if(gm->getCurrentPlayList().isEmpty()) {
             request.reply(web::http::status_codes::BadRequest, "Playlist is empty.");
             return;
         }
         try {
-            auto songIdToDelete = jsonPostBody["songId"].as_integer();
+            auto songIdToDelete = jsonPostBody[SP("songId")].as_integer();
             if(songIdToDelete >= 0) {
                 gm->getCurrentPlayList().removeSong(songIdToDelete);
                 ScreenPlaylist* m_pp = dynamic_cast<ScreenPlaylist*>(gm->getScreen("Playlist"));
@@ -196,14 +196,14 @@ void RequestHandler::Post(web::http::http_request request)
             request.reply(web::http::status_codes::BadRequest, str);
             return;
         }
-    } else if(path == "/api/setposition") {
+    } else if(path == SP("/api/setposition")) {
         if(gm->getCurrentPlayList().isEmpty()) {
             request.reply(web::http::status_codes::BadRequest, "Playlist is empty.");
             return;
         }
         try {
-            auto songIdToMove = jsonPostBody["songId"].as_integer();
-            auto positionToMoveTo = jsonPostBody["position"].as_integer();        
+            auto songIdToMove = jsonPostBody[SP("songId")].as_integer();
+            auto positionToMoveTo = jsonPostBody[SP("position")].as_integer();        
             int sizeOfPlaylist = gm->getCurrentPlayList().getList().size();
             if(songIdToMove < 0) {
                 request.reply(web::http::status_codes::BadRequest, "Can't move songs with a negative id \"" + std::to_string(songIdToMove) + "\". Please make a valid request.");
@@ -231,24 +231,24 @@ void RequestHandler::Post(web::http::http_request request)
             std::string str = std::string("JSON Exception: ") + e.what();
             request.reply(web::http::status_codes::BadRequest, str);
             return;
-        }     
-    } else if(path == "/api/search") {
-        auto query = jsonPostBody["query"].as_string();
-        m_songs.setFilter(query);
+        }
+    } else if(path == SP("/api/search")) {
+        auto query = jsonPostBody[SP("query")].as_string();
+        m_songs.setFilter(SU(query));
         web::json::value jsonRoot = web::json::value::array();
         for(int i = 0; i < m_songs.size(); i++) {
             web::json::value songObject = web::json::value::object();
-            songObject["Title"] = web::json::value::string(m_songs[i]->title);
-            songObject["Artist"] = web::json::value::string(m_songs[i]->artist);
-            songObject["Edition"] = web::json::value::string(m_songs[i]->edition);
-            songObject["Language"] = web::json::value::string(m_songs[i]->language);
-            songObject["Creator"] = web::json::value::string(m_songs[i]->creator);
+            songObject[SP("Title")] = web::json::value::string(S(m_songs[i]->title));
+            songObject[SP("Artist")] = web::json::value::string(S(m_songs[i]->artist));
+            songObject[SP("Edition")] = web::json::value::string(S(m_songs[i]->edition));
+            songObject[SP("Language")] = web::json::value::string(S(m_songs[i]->language));
+            songObject[SP("Creator")] = web::json::value::string(S(m_songs[i]->creator));
             jsonRoot[i] = songObject;
         }
         request.reply(web::http::status_codes::OK, jsonRoot);
         return;
     } else {
-        request.reply(web::http::status_codes::NotFound, "The path \""+ path +"\" was not found.");
+        request.reply(web::http::status_codes::NotFound, SP("The path \"") + path + SP("\" was not found."));
         return;
     }
 };
@@ -285,12 +285,12 @@ web::json::value RequestHandler::SongsToJsonObject() {
     web::json::value jsonRoot = web::json::value::array();
     for (int i=0; i< m_songs.size(); i++) {
         web::json::value songObject = web::json::value::object();
-        songObject["Title"] = web::json::value::string(m_songs[i]->title);
-        songObject["Artist"] = web::json::value::string(m_songs[i]->artist);
-        songObject["Edition"] = web::json::value::string(m_songs[i]->edition);
-        songObject["Language"] = web::json::value::string(m_songs[i]->language);
-        songObject["Creator"] = web::json::value::string(m_songs[i]->creator);
-        songObject["name"] = web::json::value::string(m_songs[i]->artist + " " + m_songs[i]->title);
+        songObject[SP("Title")] = web::json::value::string(S(m_songs[i]->title));
+        songObject[SP("Artist")] = web::json::value::string(S(m_songs[i]->artist));
+        songObject[SP("Edition")] = web::json::value::string(S(m_songs[i]->edition));
+        songObject[SP("Language")] = web::json::value::string(S(m_songs[i]->language));
+        songObject[SP("Creator")] = web::json::value::string(S(m_songs[i]->creator));
+        songObject[SP("name")] = web::json::value::string(S(m_songs[i]->artist) + SP(" ") + S(m_songs[i]->title));
         jsonRoot[i] = songObject;
     }
 
@@ -301,11 +301,11 @@ std::shared_ptr<Song> RequestHandler::GetSongFromJSON(web::json::value jsonDoc) 
     m_songs.setFilter("");
 
     for(int i = 0; i< m_songs.size(); i++) {
-        if(m_songs[i]->title == jsonDoc["Title"].as_string() &&
-           m_songs[i]->artist == jsonDoc["Artist"].as_string() &&
-           m_songs[i]->edition == jsonDoc["Edition"].as_string() &&
-           m_songs[i]->language == jsonDoc["Language"].as_string() &&
-           m_songs[i]->creator == jsonDoc["Creator"].as_string() ) {
+        if(S(m_songs[i]->title) == jsonDoc[SP("Title")].as_string() &&
+           S(m_songs[i]->artist) == jsonDoc[SP("Artist")].as_string() &&
+           S(m_songs[i]->edition) == jsonDoc[SP("Edition")].as_string() &&
+           S(m_songs[i]->language) == jsonDoc[SP("Language")].as_string() &&
+           S(m_songs[i]->creator) == jsonDoc[SP("Creator")].as_string() ) {
             std::clog << "webserver/info: Found requested song." << std::endl;
             return m_songs[i];
         }
