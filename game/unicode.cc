@@ -7,6 +7,7 @@
 #include <unicode/unistr.h>
 #include <unicode/ustream.h>
 #include "../ced/compact_enc_det/compact_enc_det.h"
+#include "asyncrt_utils.h"
 
 UErrorCode UnicodeUtil::m_staticIcuError = U_ZERO_ERROR;
 icu::RuleBasedCollator UnicodeUtil::m_dummyCollator (icu::UnicodeString (""), icu::Collator::PRIMARY, m_staticIcuError);
@@ -65,6 +66,19 @@ std::string UnicodeUtil::convertToUTF8 (std::string const& str) {
 	std::stringstream ss (str);
 	convertToUTF8 (ss, std::string());
 	return ss.str();
+}
+
+utf16string UnicodeUtil::convertToUTF16(std::string const & str)
+{
+	try
+	{
+		return utility::conversions::utf8_to_utf16(str);
+	}
+	catch (const std::exception&)
+	{
+		return utility::conversions::latin1_to_utf16(str);
+	}
+	return utf16string();
 }
 
 void UnicodeUtil::collate (songMetadata& stringmap) {

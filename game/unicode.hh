@@ -6,6 +6,8 @@
 #include <unicode/tblcoll.h>
 #include <unicode/uclean.h>
 #include <unicode/ucsdet.h>
+#define _TURN_OFF_PLATFORM_STRING
+#include "details/basic_types.h"
 
 typedef std::map<std::string, std::string> songMetadata;
 
@@ -19,4 +21,5 @@ struct UnicodeUtil {
 	static icu::RuleBasedCollator m_dummyCollator;
 	static icu::RuleBasedCollator m_sortCollator;
 	static UErrorCode m_staticIcuError;
+	static utf16string convertToUTF16(std::string const& str);
 };
